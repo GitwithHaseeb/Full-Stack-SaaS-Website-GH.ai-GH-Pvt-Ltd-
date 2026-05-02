@@ -99,70 +99,211 @@ The coupling is **intentionally loose**: the browser targets same-origin `/api/v
 
 ---
 
-## V. IMPLEMENTATION
+## V. IMPLEMENTATION (DETAILED)
 
-### A. Frontend Implementation
+### V.A. Frontend stack and build pipeline
 
-The **App Router** organizes marketing routes under route groups and dashboard routes under authenticated layout assumptions. **Server components** prefetch dashboard data where feasible; **client components** manage interactive forms. **Static imports** bundle founder imagery for deterministic build output on edge hosts.
+The client application targets **Node.js 20+** and ships with **Next.js 15.2.8** and **React 19**. Styling uses **Tailwind CSS** with a shared component layer under `src/components/ui` (Radix primitives). Production builds run `next build`, emitting optimized bundles, route manifests, and server action / RSC payloads where applicable. **TypeScript** enforces static typing across pages and libraries. **ESLint** (`eslint-config-next`) guards common footguns. The `next.config.ts` file enables `outputFileTracingRoot` pointing at the monorepo parent so that file tracing in container and multi-root deployments resolves shared paths consistently. Marketing routes live under the `(marketing)` route group; authenticated dashboard routes live under `(dashboard)` with layout-level assumptions for session-bearing requests.
 
-### B. Backend Implementation
+### V.B. Same-origin API proxy (`/api/v1/*`)
 
-FastAPI modules separate **routers**, **schemas**, **services**, and **models**. Dependency injection supplies database sessions and current user resolution. **SlowAPI** integrates rate limiting with a global exception handler returning HTTP 429 JSON bodies.
+Browser code calls **`NEXT_PUBLIC_API_URL`** defaulting to `/api/v1`. The App Router handler at `src/app/api/v1/[...route]/route.ts` forwards method, headers, query string, and body to **`BACKEND_INTERNAL_URL`** suffixed with `/api/v1/...`. Cookie headers are forwarded so that cookie-based sessions remain coherent when the FastAPI stack issues `Set-Cookie`. This pattern avoids exposing the internal API hostname to the browser and simplifies CORS configuration during development. Operators must set `BACKEND_INTERNAL_URL` to the full origin of the Python service in every environment (e.g., `http://127.0.0.1:8000` locally, `https://api.example.com` in production).
 
-### C. Asynchronous Persistence
+### V.C. Dashboard feature modules (user-visible)
 
-SQLAlchemy **2.x async** with **asyncpg** reduces thread pool overhead under concurrent IO-bound workloads typical of web APIs.
+| Module | Primary responsibility |
+|--------|-------------------------|
+| **Dashboard home** | Server-side fetch of pipeline metrics and lead summaries using `BACKEND_INTERNAL_URL` with forwarded cookies. |
+| **Leads** | Client-side CRUD against `/api/v1/leads/` for list and create; detail routes hydrate lead threads. |
+| **Campaigns** | Defines trigger type (`new_lead` default), optional delay days, subject/body templates; persists via `/api/v1/campaigns/`. |
+| **AI Agent** | Calls `/api/v1/ai-agent/*` for draft generation; operator remains accountable for sent content. |
+| **Calendly** | OAuth/token flows and booking link creation endpoints; webhook ingestion updates pipeline context. |
+| **API keys** | User-scoped programmatic keys stored as **hash + prefix** only (`ApiKey` model). |
+| **Settings / Billing** | Profile and placeholder billing surfaces for future monetization. |
 
-### D. Integrations
+### V.D. Backend process model
 
-Calendly and Gmail integrations require OAuth client configuration and secure token storage patterns; webhook endpoints must be publicly reachable in production (tunneling during development).
+The ASGI application is served by **Uvicorn** (development with `--reload`; production behind a process manager or container entrypoint). Request lifecycle: routing → optional rate limit → CORS → endpoint → dependency-injected `AsyncSession` → service layer → SQLAlchemy flush/commit. Exceptions map to JSON error bodies suitable for SPA consumption.
+
+### V.E. Authentication and session policy
+
+`ACCESS_TOKEN_EXPIRE_MINUTES` (default 30) and `REFRESH_TOKEN_EXPIRE_DAYS` (default 7) are centralized in `Settings`. Passwords are stored hashed in `users.hashed_password`. Tokens are issued by auth routers (see OpenAPI `/docs`). Refresh and rotation policies should be tightened for high-security tenants.
+
+### V.F. Rate limiting
+
+**SlowAPI** attaches to application state; `RateLimitExceeded` returns HTTP **429** with JSON `{"detail":"Rate limit exceeded"}`. Limits should be tuned per route class: authentication endpoints warrant stricter thresholds than read-only marketing proxies.
+
+### V.G. Database schema (relational core)
+
+PostgreSQL holds authoritative rows for:
+
+- **`users`**: `id` (UUID PK), unique `email`, `hashed_password`, optional `full_name`, `company`, encrypted or opaque `gmail_refresh_token`, `calendly_token`, JSONB `ai_config`, `timezone`, JSONB `working_hours`, timestamps. Relationships: `leads`, `email_logs`, `campaigns`, `calendly_events`, `api_keys`.
+- **`leads`**: `id`, `user_id` FK CASCADE, `name`, `email`, optional `company`, `pipeline_stage` (string; canonical values include `New Lead`, `Contacted`, `Meeting Scheduled`, `Closed`), `notes`, `last_contacted_at`, `assigned_agent` boolean, `created_at`. Related `email_history`, `calendly_events`.
+- **`campaigns`**: `user_id`, `name`, `trigger_type`, optional `trigger_days`, `subject`, `body`, `created_at`.
+- **`email_logs`**: optional `lead_id` SET NULL on lead delete, `user_id`, `subject`, `body`, `sent_at`, `status`, `provider_message_id`, `direction` default `outbound`.
+- **`calendly_events`**: optional `lead_id`, `user_id`, `calendly_event_uri`, `status`, `booked_at`, JSONB `raw_payload` for auditing webhook payloads.
+- **`api_keys`**: `user_id`, `name`, unique `key_hash`, `key_prefix`, `created_at`, optional `revoked_at`.
+- **`waitlist`**: marketing capture for pre-launch emails (see waitlist endpoint).
+
+Foreign keys use `ON DELETE CASCADE` for user-owned children where orphan rows are meaningless; `SET NULL` where historical logs must survive lead deletion.
+
+### V.H. Alembic migrations
+
+Schema evolution is tracked under `backend/alembic/`. Operators must run `alembic upgrade head` on every deploy before serving traffic. Downgrades should be rehearsed in staging.
+
+### V.I. Celery worker surface
+
+`docker-compose.yml` defines a **`celery`** service: `celery -A app.tasks.celery_app worker -l info`, sharing the backend image and `.env`. Tasks include asynchronous email sends and scoring (see `app/tasks`). Workers require Redis connectivity identical to the API.
+
+### V.J. External integrations (engineering detail)
+
+**OpenAI**: `OPENAI_API_KEY` in settings; AI routes must guard against prompt injection by validating and truncating user-supplied strings before model calls. **Gmail**: OAuth client id/secret plus per-user refresh token storage on `User`. **Calendly**: personal token for server operations; webhooks at `/webhooks/calendly` and duplicate mount for path-prefixed proxies. **Contact / waitlist**: dedicated FastAPI routes log or persist submissions.
+
+### V.K. Observability and logging
+
+Python `logging` records contact submissions and operational warnings (e.g., readiness failures). Correlation IDs may be added later via middleware.
+
+### V.L. Frontend environment contract
+
+| Variable | Role |
+|----------|------|
+| `BACKEND_INTERNAL_URL` | Origin of FastAPI for server-side fetches and proxy target assembly. |
+| `NEXT_PUBLIC_API_URL` | Browser-relative API prefix (default `/api/v1`). |
+| `NEXT_PUBLIC_APP_NAME` | Branding string in UI. |
 
 ---
 
-## VI. DEPLOYMENT ENGINEERING
+## VI. DEPLOYMENT ENGINEERING (EXPANDED)
 
-### A. Source Control (GitHub)
+### VI.A. GitHub repository layout
 
-All changes flow through **Git** with **`main`** as production. Pull requests (recommended) gate review. Tags may mark releases.
+The monorepo hosts `frontend/`, `backend/`, `docs/`, `docker-compose.yml`, `README.md`, and `DEPLOY.md`. Branch **`main`** is production. Feature branches merge via pull request where team policy requires review.
 
-### B. Continuous Deployment (Vercel)
+### VI.B. Local Docker Compose topology
 
-The **frontend** directory is designated as the **Vercel Root Directory** so that framework detection and `npm ci` operate on the correct `package-lock.json`. Environment variables must mirror production secrets policy. **Automatic deployments** trigger on pushes to `main`.
+| Service | Image / build | Ports | Purpose |
+|---------|---------------|-------|---------|
+| `db` | `postgres:15` | 5432 | Primary relational store (`ghai` database). |
+| `redis` | `redis:7-alpine` | 6379 | Celery broker and cache substrate. |
+| `backend` | `./backend` Dockerfile | 8000 | Runs `alembic upgrade head` then `uvicorn`. |
+| `celery` | same image as backend | — | Background worker process. |
+| `frontend` | `./frontend` Dockerfile | 3000 | Next.js dev/prod server. |
 
-### C. Backend Hosting
+`backend` and `celery` mount `./backend/.env`; `frontend` mounts `./frontend/.env.local`. Persistent Postgres data uses named volume `postgres_data`.
 
-The API should run on a container-friendly platform with **horizontal scaling** options. Health checks should target `/health` and `/health/ready`.
+### VI.C. Vercel frontend production
 
-### D. Database Hosting
+**Root Directory** must be **`frontend`**. Framework auto-detection reads `package.json` `dependencies.next`. **Do not** combine root-level `vercel.json` with `npm ci --prefix frontend` when the project root is already `frontend`—that pattern double-prefixes paths and fails in seconds. Environment variables in Vercel must include production `BACKEND_INTERNAL_URL` and appropriate `CORS_ORIGINS` entries on the API host listing the Vercel hostname.
 
-Managed PostgreSQL (e.g., **Neon**) simplifies TLS and failover; connection strings must use **`postgresql+asyncpg://`** driver prefix for this codebase.
+### VI.D. Backend production hosting (recommended patterns)
 
----
+Deploy FastAPI on a VM, PaaS container, or Kubernetes with: (1) HTTPS termination; (2) at least two Uvicorn workers or Gunicorn+Uvicorn workers; (3) liveness on `/health`; (4) readiness on `/health/ready` including DB check; (5) secrets from a managed vault; (6) horizontal autoscaling rules based on CPU and p95 latency.
 
-## VII. SECURITY AND PRIVACY CONSIDERATIONS
+### VI.E. Managed PostgreSQL
 
-Threats include **credential theft**, **CSRF** on state-changing routes, **rate-based abuse**, and **injection** into LLM prompts. Mitigations include HTTPS everywhere in production, HttpOnly cookies where applicable, server-side validation with Pydantic, rate limits, and least-privilege API keys for third-party services. Privacy posture must be documented separately for GDPR-class obligations if EU data subjects are served.
+Neon/RDS/Cloud SQL: enforce TLS, rotate credentials, enable automated backups, configure `max_connections` to exceed peak API+worker concurrency with headroom.
 
----
+### VI.F. Rollback strategy
 
-## VIII. TESTING AND VALIDATION
-
-Recommended layers: **unit tests** for services, **contract tests** for API schemas, **end-to-end tests** for critical flows (registration → login → lead creation), and **load tests** for webhook bursts. Local validation uses Docker Compose parity with production topology as closely as practical.
-
----
-
-## IX. LIMITATIONS AND FUTURE WORK
-
-Limitations include **single-region** default assumptions, **manual** multi-tenant partitioning if required later, and **operator-dependent** configuration of OAuth consent screens. Future work: **role-based access control** granularity, **audit logs** export, **native mobile clients**, and **federated identity** (SAML/OIDC enterprise SSO).
+Tag Docker images and Git releases. Database backward compatibility requires additive migrations before destructive drops. Vercel instant rollback promotes a prior deployment artifact.
 
 ---
 
-## X. CONCLUSION
+## VII. SECURITY AND PRIVACY (EXPANDED)
 
-GH.ai demonstrates a **coherent** full-stack architecture suitable for a commercial SaaS MVP: a modern React server environment, a typed Python API, durable PostgreSQL storage, and Redis-backed asynchronous processing. Deployment guidance emphasizes **correct Vercel root selection** and **secure** cross-service communication. The platform is positioned for iterative enhancement as customer feedback and telemetry inform product decisions.
+### VII.A. Threat catalog (representative)
+
+| Threat ID | Description | Mitigation |
+|-----------|-------------|------------|
+| T-01 | Credential stuffing on `/api/v1/auth/login` | Rate limits, optional CAPTCHA, lockout policies. |
+| T-02 | Token theft via XSS | Content Security Policy headers (future), HttpOnly cookies, strict React escaping. |
+| T-03 | CSRF on state-changing routes | SameSite cookies, anti-CSRF tokens if cookie auth without SameSite=strict. |
+| T-04 | SQL injection | SQLAlchemy bound parameters exclusively. |
+| T-05 | LLM prompt injection | Sanitize/truncate user text; never execute model output as code. |
+| T-06 | Webhook spoofing | Verify provider signatures (implement per vendor docs). |
+
+### VII.B. Data classification
+
+User emails, OAuth tokens, API key hashes, lead PII, and Calendly payloads are **confidential**. Logs must redact tokens. Backups must be encrypted at rest.
+
+### VII.C. Compliance note
+
+If EU data subjects are onboarded, maintain Records of Processing Activities, DPIA for AI features, and data subject erasure procedures cascading deletes across `users` and dependent rows.
 
 ---
 
+## VIII. TESTING AND VALIDATION (EXPANDED)
+
+### VIII.A. Test pyramid
+
+**Unit**: services (pipeline advance rules, campaign triggers). **Integration**: database transactions with testcontainers Postgres. **API**: schemathesis or pytest-httpx against OpenAPI. **E2E**: Playwright flows for register→login→create lead. **Load**: k6 on read-heavy dashboard endpoints and webhook burst simulations.
+
+### VIII.B. Definition of Done (example)
+
+A feature is releasable when: migrations applied; OpenAPI updated; manual smoke on Docker Compose; no P1 linter violations; rollback steps documented.
+
+---
+
+## IX. LIMITATIONS AND FUTURE WORK (EXPANDED)
+
+Current limitations: single-tenant assumptions; no native mobile apps; AI costs variable; Gmail/Calendly setup requires operator expertise; Celery tasks must be monitored for poison messages.
+
+Roadmap: multi-tenant row-level security; SAML SSO; billing provider integration; granular RBAC; audit log export; webhook signature verification everywhere; canary deploys.
+
+---
+
+## X. CONCLUSION (EXPANDED)
+
+GH.ai operationalizes a **defensible** SaaS architecture: **Next.js** for user experience and edge-friendly delivery, **FastAPI** for typed business logic, **PostgreSQL** for durable state, **Redis/Celery** for asynchronous work, and **explicit** integration boundaries for Gmail, Calendly, and LLM vendors. The deployment story—**GitHub** for source, **Vercel** for the frontend shell, and portable backend containers—matches how lean teams ship revenue software in 2026. Continued investment in **security verification**, **observability**, and **customer-driven prioritization** will determine commercial outcomes beyond the MVP described herein.
+
+---
+
+## XI. API SURFACE CATALOG (REPRESENTATIVE)
+
+The following table summarizes primary **versioned** REST areas mounted under `/api/v1` (exact paths appear in OpenAPI `/docs`). Webhooks are additional.
+
+| Area | Prefix | Notes |
+|------|--------|------|
+| Authentication | `/api/v1/auth` | Registration, login, token refresh patterns. |
+| Users | `/api/v1/users` | `/me` read/update profile. |
+| Leads | `/api/v1/leads` | CRUD scoped to current user. |
+| Pipeline | `/api/v1/pipeline` | Stage catalog and advance operations. |
+| Campaigns | `/api/v1/campaigns` | Triggered outreach definitions. |
+| AI Agent | `/api/v1/ai-agent` | Generation endpoints. |
+| Calendly | `/api/v1/calendly` | Connect, event types, booking links, webhook receiver. |
+| Email | `/api/v1/email` | Sending and logging integration. |
+| API keys | `/api/v1/api-keys` | Create/list/revoke hashed keys. |
+| Marketing | `/api/v1/waitlist`, `/api/v1/contact` | Also top-level routes in `main.py`. |
+
+Health: `/health` (liveness), `/health/ready` (DB probe).
+
+---
+
+## XII. TRACEABILITY MATRIX (REQUIREMENTS TO COMPONENTS)
+
+| Requirement ID | User story | Primary components |
+|------------------|-----------|---------------------|
+| FR-01 | Visitor reads marketing pages | Next `(marketing)/*` routes |
+| FR-02 | Visitor submits waitlist | `POST /api/v1/waitlist`, `WaitlistEntry` |
+| FR-03 | Visitor contacts founders | `POST /api/v1/contact` |
+| FR-04 | User registers | Auth router, `users` table |
+| FR-05 | User logs in | Auth router, cookies/tokens |
+| FR-06 | User lists leads | `leads` router, dashboard page |
+| FR-07 | User advances pipeline | `pipeline` router, `Lead.pipeline_stage` |
+| FR-08 | User defines campaign | `campaigns` router |
+| FR-09 | User requests AI draft | `ai_agent` router, OpenAI |
+| FR-10 | User connects Calendly | `calendly` router, token columns |
+| FR-11 | System receives Calendly webhook | `webhooks`, `CalendlyEvent` |
+| FR-12 | Background email send | Celery tasks, Gmail |
+| FR-13 | Admin monitors health | `/health`, `/health/ready` |
+
+---
+
+## XIII. GLOSSARY (EXTENDED)
+
+**ASGI:** Asynchronous Server Gateway Interface standard underpinning Uvicorn+FastAPI. **JSONB:** PostgreSQL binary JSON column type used for flexible payloads (`ai_config`, `raw_payload`). **ORM:** Object-relational mapper (SQLAlchemy). **SSR:** Server-side rendering. **ISR:** Incremental static regeneration (available in Next where configured). **Webhook:** HTTP POST callback from SaaS providers on events.
+
+---
 ## REFERENCES
 
 [1] Vercel Inc., “Next.js Documentation,” 2025–2026. [Online]. Available: `https://nextjs.org/docs`  
