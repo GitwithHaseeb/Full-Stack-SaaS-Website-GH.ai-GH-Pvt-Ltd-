@@ -27,12 +27,29 @@ Optional: **Docker** + Compose to run Postgres + Redis + app containers (see bel
 
 ## Vercel (frontend only)
 
-1. Import the **same GitHub repo** you push to (`GitwithHaseeb/Full-Stack-SaaS-Website-GH.ai-GH-Pvt-Ltd-`, branch **`main`**).
-2. **Root Directory** — either works:
-   - **Repository root** `.` (default): root `package.json` + `vercel.json` install/build `./frontend` (committed in this repo).
-   - **`frontend`**: leave Framework **Next.js**; no need for root overrides.
-3. **Deployments → Redeploy** and confirm the deployment **commit** is the latest on GitHub.
-4. Add env vars for the frontend (see `frontend/.env.local.example`); set `BACKEND_INTERNAL_URL` to your hosted API when FastAPI is not on Vercel.
+**One-time setup (Settings)**
+
+1. Open [Vercel Dashboard](https://vercel.com/dashboard) → select project **full-stack-saa-s-website-gh-ai-gh-pvt-ltd** (or your project name).
+2. **Settings** (top) → **Build & Deployment** → **Root Directory** → **Edit**.
+3. Clear `./` and set **`frontend`** (the folder that contains `frontend/package.json`) → **Save**.
+
+**Deploy the latest commit from `main` (when production is stuck on an old SHA)**
+
+1. **Deployments** tab (left sidebar).
+2. Top right: **Deploy** menu → **Create Deployment** (if you see it).  
+   - **Branch:** `main`  
+   - Open the **commit** dropdown and choose the **top / newest** row (same short SHA as on GitHub `main`, e.g. `a3a24ba` or whatever is latest).  
+   - Enable **Production** if asked → **Deploy**.
+3. **Alternate:** open the latest row that already built from GitHub (green **Ready**) → open it → **⋯** (three dots) → **Promote to Production** (if your “Current” is older).
+4. **Alternate:** **Redeploy** on any deployment → leave branch **`main`** → turn **“Use existing Build Cache”** **off** → **Redeploy** (rebuilds latest linked commit depending on UI).
+
+**After every `git push` to `main`**
+
+- Vercel usually starts a new deployment automatically in ~1–2 minutes. Open **Deployments** and confirm the newest row shows **Ready** and the **commit** matches GitHub.
+
+**Env**
+
+- Add frontend env vars (see `frontend/.env.local.example`); set `BACKEND_INTERNAL_URL` to your hosted API when FastAPI is not on Vercel.
 
 ## PostgreSQL: choose one setup
 
