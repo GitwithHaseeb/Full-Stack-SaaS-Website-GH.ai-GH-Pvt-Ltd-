@@ -1,5 +1,7 @@
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
+import ghaniaPhoto from "@/assets/team/ghania.png";
+import haseebPhoto from "@/assets/team/haseeb.png";
 
 const timeline = [
   { year: "2024", title: "GH.ai concept", body: "Explored AI-assisted outbound for SMB and mid-market teams." },
@@ -23,12 +25,13 @@ export default function AboutPage() {
         <Card>
           <CardContent className="space-y-3 pt-6">
             <Image
-              src="/team/ghania.png"
+              src={ghaniaPhoto}
               alt="Ghania Tanveer"
               width={400}
               height={400}
               className="aspect-square w-full rounded-lg object-cover object-top"
               priority
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
             <h3 className="text-xl font-semibold">Ghania Tanveer</h3>
             <p className="text-sm text-muted-foreground">CEO, Co-Founder — leads product vision and customer success.</p>
@@ -40,11 +43,12 @@ export default function AboutPage() {
         <Card>
           <CardContent className="space-y-3 pt-6">
             <Image
-              src="/team/haseeb.png"
+              src={haseebPhoto}
               alt="Muhammad Haseeb"
               width={400}
               height={400}
               className="aspect-square w-full rounded-lg object-cover object-top"
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
             <h3 className="text-xl font-semibold">Muhammad Haseeb</h3>
             <p className="text-sm text-muted-foreground">CEO, Co-Founder — leads engineering and go-to-market systems.</p>
