@@ -2,7 +2,9 @@
 
 Production-oriented full-stack SaaS: **Next.js 15** (App Router) · **FastAPI** · **PostgreSQL** · **Redis** · **Celery** (async SQLAlchemy + **asyncpg**).
 
-**Live (Vercel — frontend):** [https://full-stack-saa-s-website-gh-ai-gh-p.vercel.app/](https://full-stack-saa-s-website-gh-ai-gh-p.vercel.app/)
+**Production (Vercel — frontend):** [https://full-stack-saa-s-website-gh-ai-gh-p.vercel.app/](https://full-stack-saa-s-website-gh-ai-gh-p.vercel.app/)
+
+**Documentation:** step-by-step deployment → [`DEPLOY.md`](./DEPLOY.md). IEEE-style technical report (Markdown + Word generator) → [`docs/IEEE-GH-AI-Project-Report.md`](./docs/IEEE-GH-AI-Project-Report.md); generate Word with `python docs/generate_ieee_report.py` → `docs/IEEE-GH-AI-Project-Report.docx`.
 
 ## Architecture
 
