@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Github, Linkedin, Twitter } from "lucide-react";
+import { Linkedin } from "lucide-react";
 import { LogoMark } from "@/components/marketing/logo-mark";
 
 export function MarketingFooter() {
@@ -55,9 +55,6 @@ export function MarketingFooter() {
               </li>
             </ul>
             <div className="mt-4 flex flex-wrap items-center gap-3 text-foreground">
-              <a href="#" aria-label="Twitter" className="hover:text-primary">
-                <Twitter className="h-5 w-5" />
-              </a>
               <a
                 href="https://www.linkedin.com/in/muhammad-haseeb-5a73bb317"
                 target="_blank"
@@ -75,15 +72,6 @@ export function MarketingFooter() {
                 className="hover:text-primary"
               >
                 <Linkedin className="h-5 w-5" />
-              </a>
-              <a
-                href="https://github.com/GitwithHaseeb/Full-Stack-SaaS-Website-GH.ai-GH-Pvt-Ltd-"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="GH.ai on GitHub"
-                className="hover:text-primary"
-              >
-                <Github className="h-5 w-5" />
               </a>
             </div>
           </div>
