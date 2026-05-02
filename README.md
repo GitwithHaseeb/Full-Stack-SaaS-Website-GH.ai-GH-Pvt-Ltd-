@@ -2,6 +2,8 @@
 
 Production-oriented full-stack SaaS: **Next.js 15** (App Router) · **FastAPI** · **PostgreSQL** · **Redis** · **Celery** (async SQLAlchemy + **asyncpg**).
 
+**Live (Vercel — frontend):** [https://full-stack-saa-s-website-gh-ai-gh-p.vercel.app/](https://full-stack-saa-s-website-gh-ai-gh-p.vercel.app/)
+
 ## Architecture
 
 | Layer | Technology | Role |
