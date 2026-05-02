@@ -1,0 +1,11 @@
+{
+  "name": "ghai-repo-root",
+  "private": true,
+  "description": "Vercel: keep Root Directory as repository root (.) so install/build reach ./frontend. If you instead set Root Directory to frontend, delete this file and vercel.json from the repo root.",
+  "dependencies": {
+    "next": "15.2.8"
+  },
+  "scripts": {
+    "build": "npm run build --prefix frontend"
+  }
+}
