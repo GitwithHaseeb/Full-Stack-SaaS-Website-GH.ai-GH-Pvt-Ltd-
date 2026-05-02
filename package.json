@@ -1,0 +1,8 @@
+{
+  "name": "ghai-repo-root",
+  "private": true,
+  "description": "Vercel reads this file at the repo root for framework detection. The Next.js app lives in ./frontend.",
+  "dependencies": {
+    "next": "15.2.4"
+  }
+}
