@@ -1,8 +1,10 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  output: "standalone",
+  /** Monorepo: correct file tracing when the repo root is not the app root (Vercel/Docker). */
+  outputFileTracingRoot: path.join(__dirname, ".."),
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "placehold.co", pathname: "/**" },

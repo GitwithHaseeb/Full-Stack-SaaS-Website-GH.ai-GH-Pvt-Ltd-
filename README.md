@@ -23,6 +23,13 @@ There is **no SQLite or file-based database** in this codebase: a running Postgr
 
 Optional: **Docker** + Compose to run Postgres + Redis + app containers (see below).
 
+## Vercel (frontend only)
+
+1. Import the **same GitHub repo** you push to from this machine (`GitwithHaseeb/Full-Stack-SaaS-Website-GH.ai-GH-Pvt-Ltd-`, branch **`main`**).
+2. **Settings → Build & Deployment → Root Directory:** set to **`frontend`** (the folder that contains `frontend/package.json`). Save.
+3. **Deployments → Redeploy** and confirm the deployment **commit hash** matches the latest commit on GitHub (not an old hash like `437fd39`).
+4. Add env vars on the Vercel project for the frontend (see `frontend/.env.local.example`); point `BACKEND_INTERNAL_URL` at your hosted API when the FastAPI app is not on Vercel.
+
 ## PostgreSQL: choose one setup
 
 ### A. Local install (no Docker)
