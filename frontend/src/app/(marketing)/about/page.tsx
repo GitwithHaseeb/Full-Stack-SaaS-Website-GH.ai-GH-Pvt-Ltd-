@@ -23,11 +23,12 @@ export default function AboutPage() {
         <Card>
           <CardContent className="space-y-3 pt-6">
             <Image
-              src="https://placehold.co/400x400/png?text=Ghania+Tanveer"
+              src="/team/ghania.png"
               alt="Ghania Tanveer"
               width={400}
               height={400}
-              className="w-full rounded-lg object-cover"
+              className="aspect-square w-full rounded-lg object-cover object-top"
+              priority
             />
             <h3 className="text-xl font-semibold">Ghania Tanveer</h3>
             <p className="text-sm text-muted-foreground">CEO, Co-Founder — leads product vision and customer success.</p>
@@ -39,11 +40,11 @@ export default function AboutPage() {
         <Card>
           <CardContent className="space-y-3 pt-6">
             <Image
-              src="https://placehold.co/400x400/png?text=Muhammad+Haseeb"
+              src="/team/haseeb.png"
               alt="Muhammad Haseeb"
               width={400}
               height={400}
-              className="w-full rounded-lg object-cover"
+              className="aspect-square w-full rounded-lg object-cover object-top"
             />
             <h3 className="text-xl font-semibold">Muhammad Haseeb</h3>
             <p className="text-sm text-muted-foreground">CEO, Co-Founder — leads engineering and go-to-market systems.</p>
