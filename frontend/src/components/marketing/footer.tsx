@@ -54,14 +54,35 @@ export function MarketingFooter() {
                 <a href="mailto:haseebch8130@gmail.com">haseebch8130@gmail.com</a>
               </li>
             </ul>
-            <div className="mt-4 flex gap-3 text-foreground">
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-foreground">
               <a href="#" aria-label="Twitter" className="hover:text-primary">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" aria-label="LinkedIn" className="hover:text-primary">
+              <a
+                href="https://www.linkedin.com/in/muhammad-haseeb-5a73bb317"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Muhammad Haseeb on LinkedIn"
+                className="hover:text-primary"
+              >
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a href="#" aria-label="GitHub" className="hover:text-primary">
+              <a
+                href="https://www.linkedin.com/in/ghania-tanveer-894625311/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Ghania Tanveer on LinkedIn"
+                className="hover:text-primary"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+              <a
+                href="https://github.com/GitwithHaseeb/Full-Stack-SaaS-Website-GH.ai-GH-Pvt-Ltd-"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GH.ai on GitHub"
+                className="hover:text-primary"
+              >
                 <Github className="h-5 w-5" />
               </a>
             </div>
