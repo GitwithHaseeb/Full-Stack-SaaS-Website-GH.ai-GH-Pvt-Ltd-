@@ -112,13 +112,13 @@ npm run dev
 
 ## Gmail webhooks (ngrok)
 
-For Gmail `users.watch`, Google needs a public HTTPS URL. Expose the backend (e.g. [ngrok](https://ngrok.com/)) and point the watch callback to `POST /webhooks/gmail`. Register the tunnel hostname in Google Cloud Console (OAuth + Gmail API) as required.
+For Gmail `users.watch`, Google needs a public HTTPS URL. Expose the backend (e.g. [ngrok](https://ngrok.com/)) and point the watch callback to `POST /webhooks/gmail` (direct backend) or `POST /api/v1/webhooks/gmail` when the API is only routed under `/api` (e.g. Vercel Services). Register the tunnel hostname in Google Cloud Console (OAuth + Gmail API) as required.
 
 ## Troubleshooting
 
 - **`DATABASE_URL` validation error on startup:** URL must start with `postgresql+asyncpg://`. Hosted strings that start with `postgresql://` must be adjusted as described above.
 - **`npm install` / `npm run build` fails with `ENOSPC`:** Free disk space for `node_modules` and the npm cache (often `%LocalAppData%\npm-cache` on Windows).
-- **Branding:** Favicon is generated from `frontend/src/app/icon.tsx`; `frontend/public/logo.svg` is used in the UI.
+- **Branding:** Favicon is set in `frontend/src/app/layout.tsx` (`/logo.svg`); the same `frontend/public/logo.svg` is used in the UI.
 
 ## Founders
 

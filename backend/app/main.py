@@ -44,6 +44,8 @@ app.add_middleware(
 
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(webhooks.router, prefix="/webhooks")
+# Same routes under /api/v1/webhooks so they work when the API is mounted at /api (e.g. Vercel Services).
+app.include_router(webhooks.router, prefix="/api/v1/webhooks")
 
 
 @app.post("/api/v1/waitlist")
@@ -71,12 +73,14 @@ async def contact_form(body: ContactFormRequest) -> dict[str, str]:
 
 
 @app.get("/health")
+@app.get("/api/health")
 async def health() -> dict[str, str]:
     """Liveness: no external dependencies (suitable for simple load balancers)."""
     return {"status": "ok"}
 
 
 @app.get("/health/ready")
+@app.get("/api/health/ready")
 async def health_ready() -> JSONResponse:
     """Readiness: confirms PostgreSQL connectivity (same DB as the rest of the API)."""
     try:
