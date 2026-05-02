@@ -4,7 +4,7 @@ Production-oriented full-stack SaaS: **Next.js 15** (App Router) · **FastAPI** 
 
 **Production (Vercel — frontend):** [https://full-stack-saa-s-website-gh-ai-gh-p.vercel.app/](https://full-stack-saa-s-website-gh-ai-gh-p.vercel.app/)
 
-**Documentation:** step-by-step deployment → [`DEPLOY.md`](./DEPLOY.md). IEEE-style technical report (Markdown + Word generator) → [`docs/IEEE-GH-AI-Project-Report.md`](./docs/IEEE-GH-AI-Project-Report.md); generate Word with `python docs/generate_ieee_report.py` → `docs/IEEE-GH-AI-Project-Report.docx`.
+**Documentation:** step-by-step deployment → [`DEPLOY.md`](./DEPLOY.md). IEEE-style technical report (Markdown + Word generator) → [`docs/IEEE-GH-AI-Project-Report.md`](./docs/IEEE-GH-AI-Project-Report.md); generate Word with `python docs/generate_ieee_report.py` → `docs/IEEE-GH-AI-Project-Report.docx`. **Asaan user flow (Roman Urdu):** [`docs/ASAAN-GUIDE.md`](./docs/ASAAN-GUIDE.md).
 
 ## Architecture
 
