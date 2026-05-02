@@ -25,10 +25,12 @@ Optional: **Docker** + Compose to run Postgres + Redis + app containers (see bel
 
 ## Vercel (frontend only)
 
-1. Import the **same GitHub repo** you push to from this machine (`GitwithHaseeb/Full-Stack-SaaS-Website-GH.ai-GH-Pvt-Ltd-`, branch **`main`**).
-2. **Settings → Build & Deployment → Root Directory:** set to **`frontend`** (the folder that contains `frontend/package.json`). Save.
-3. **Deployments → Redeploy** and confirm the deployment **commit hash** matches the latest commit on GitHub (not an old hash like `437fd39`).
-4. Add env vars on the Vercel project for the frontend (see `frontend/.env.local.example`); point `BACKEND_INTERNAL_URL` at your hosted API when the FastAPI app is not on Vercel.
+1. Import the **same GitHub repo** you push to (`GitwithHaseeb/Full-Stack-SaaS-Website-GH.ai-GH-Pvt-Ltd-`, branch **`main`**).
+2. **Root Directory** — either works:
+   - **Repository root** `.` (default): root `package.json` + `vercel.json` install/build `./frontend` (committed in this repo).
+   - **`frontend`**: leave Framework **Next.js**; no need for root overrides.
+3. **Deployments → Redeploy** and confirm the deployment **commit** is the latest on GitHub.
+4. Add env vars for the frontend (see `frontend/.env.local.example`); set `BACKEND_INTERNAL_URL` to your hosted API when FastAPI is not on Vercel.
 
 ## PostgreSQL: choose one setup
 

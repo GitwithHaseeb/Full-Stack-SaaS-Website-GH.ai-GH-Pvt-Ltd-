@@ -1,0 +1,10 @@
+{
+  "name": "ghai-repo-root",
+  "private": true,
+  "dependencies": {
+    "next": "15.2.8"
+  },
+  "scripts": {
+    "build": "npm run build --prefix frontend"
+  }
+}
