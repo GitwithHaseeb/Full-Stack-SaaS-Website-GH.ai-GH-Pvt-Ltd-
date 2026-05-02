@@ -1,3 +1,5 @@
+"""Async SQLAlchemy engine targeting PostgreSQL via asyncpg (see Settings.DATABASE_URL)."""
+
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine

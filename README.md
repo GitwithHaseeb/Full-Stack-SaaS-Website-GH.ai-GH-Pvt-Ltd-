@@ -1,86 +1,129 @@
 # GH.ai — GH Pvt Ltd
 
-Production-style full-stack SaaS: **Next.js 15** (App Router) + **FastAPI** + **PostgreSQL** + **Redis** + **Celery**.
+Production-oriented full-stack SaaS: **Next.js 15** (App Router) · **FastAPI** · **PostgreSQL** · **Redis** · **Celery** (async SQLAlchemy + **asyncpg**).
+
+## Architecture
+
+| Layer | Technology | Role |
+|--------|------------|------|
+| Web UI | Next.js 15, React 19, Tailwind | Marketing site, auth UI, dashboard; browser calls same-origin `/api/v1/*` proxied to FastAPI |
+| API | FastAPI, Pydantic v2 | REST + webhooks; **all application entities persist in PostgreSQL** |
+| Data | **PostgreSQL 15+** via `postgresql+asyncpg://` | Single source of truth (users, leads, campaigns, Calendly events, etc.) |
+| Jobs | Celery + Redis | Background email and scoring tasks |
+| Cache / broker | Redis 7+ | Celery broker and optional app caching |
+
+There is **no SQLite or file-based database** in this codebase: a running PostgreSQL instance (local, Docker, or managed cloud) is **required** for the API and Alembic migrations.
 
 ## Prerequisites
 
-Pick one:
+- **PostgreSQL 15+** (listening URL must use driver prefix `postgresql+asyncpg://` in `DATABASE_URL`)
+- **Redis 7+** on port **6379** (or override `REDIS_URL` / Celery URLs)
+- **Python 3.12+** (backend)
+- **Node.js 20+** (frontend)
 
-- **Recommended without Docker:** PostgreSQL **15+**, Redis **7+** (default `127.0.0.1:5432` / `127.0.0.1:6379`), Python **3.12+**, Node **20+**.
-- **Optional:** [Docker](https://docs.docker.com/get-docker/) + Compose if you prefer containers later.
+Optional: **Docker** + Compose to run Postgres + Redis + app containers (see below).
 
-## Run locally (PostgreSQL + Redis — no Docker)
+## PostgreSQL: choose one setup
 
-1. **PostgreSQL:** create database `ghai` (e.g. `CREATE DATABASE ghai;`) and a user/password that match your URL.
+### A. Local install (no Docker)
 
-2. **Redis:** start `redis-server` listening on **6379** (Windows: [Memurai](https://www.memurai.com/) developer, WSL Redis, or a native port of Redis). Celery and the app expect Redis at **`redis://127.0.0.1:6379/0`** unless you override.
+1. Create role/database, e.g.:
 
-3. **Backend env:** copy `backend/.env.example` → `backend/.env` and edit `DATABASE_URL` if your Postgres user/password differ.
+   ```sql
+   CREATE DATABASE ghai;
+   ```
 
-4. **Frontend env:** copy `frontend/.env.local.example` → `frontend/.env.local` (keeps `BACKEND_INTERNAL_URL=http://127.0.0.1:8000` for the Next.js API proxy).
+2. Set `DATABASE_URL` in `backend/.env` to match user, password, host, and database name.
 
-5. **Migrations & API** (from `backend/`):
+### B. Docker Compose (Postgres + Redis + apps)
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
-alembic upgrade head
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-6. **Celery worker** (second terminal, same venv + `backend/`):
-
-```powershell
-celery -A app.tasks.celery_app worker -l info
-```
-
-7. **Frontend** (third terminal, from `frontend/`):
-
-```powershell
-npm install
-npm run dev
-```
-
-- **UI:** http://localhost:3000  
-- **API docs:** http://localhost:8000/docs  
-- **API base (browser → Next proxy):** `/api/v1` on port 3000, forwarded to FastAPI on 8000.
-
-## Quick start (Docker — optional)
-
-From this directory:
+From the repository root:
 
 ```bash
 docker compose up --build
 ```
 
-### First-time database migrations (Docker)
+Postgres is defined as `postgres:15` with database `ghai`, user/password `postgres`/`postgres` (override in `docker-compose.yml` or env for production).
+
+**First-time migrations:**
 
 ```bash
 docker compose exec backend alembic upgrade head
-# or
-docker compose exec backend python -m alembic upgrade head
 ```
+
+### C. Managed PostgreSQL (Neon, Supabase, Railway, AWS RDS, …)
+
+1. Create a database and obtain the connection string (often `postgresql://…`).
+2. For this project, **change the scheme** to **`postgresql+asyncpg://`** so SQLAlchemy uses the async driver already declared in `requirements.txt`.
+3. If the provider requires TLS, append query parameters as documented by the host (e.g. `?ssl=require`).
+
+Example shape (values are illustrative only):
+
+```env
+DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@ep-example.region.aws.neon.tech/neondb?ssl=require
+```
+
+## Environment files
+
+| File | Purpose |
+|------|---------|
+| `backend/.env.example` | Template for FastAPI — copy to `backend/.env` |
+| `frontend/.env.local.example` | Template for Next.js — copy to `frontend/.env.local` |
+
+Never commit real `.env` or `.env.local` files (they are listed in `.gitignore`).
+
+## Run locally (PostgreSQL + Redis already running)
+
+### Backend
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env
+alembic upgrade head
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Health checks**
+
+- `GET http://localhost:8000/health` — process liveness (no DB).
+- `GET http://localhost:8000/health/ready` — **PostgreSQL** connectivity (`SELECT 1`); returns **503** if the database is unreachable.
+
+### Celery worker (second terminal, same venv, `backend/`)
+
+```powershell
+celery -A app.tasks.celery_app worker -l info
+```
+
+### Frontend (third terminal)
+
+```powershell
+cd frontend
+npm install
+copy .env.local.example .env.local
+npm run dev
+```
+
+- **Marketing / app UI:** http://localhost:3000  
+- **OpenAPI:** http://localhost:8000/docs  
+- **Browser API path:** `/api/v1` on port 3000 (Next.js route forwards to FastAPI on 8000 via `BACKEND_INTERNAL_URL`).
 
 ## Gmail webhooks (ngrok)
 
-For Gmail `users.watch`, Google must reach a public HTTPS URL. For local development, expose the backend with [ngrok](https://ngrok.com/) (or similar) and set the watch callback to your tunnel URL pointing at `POST /webhooks/gmail`. Document the URL in your Google Cloud Console OAuth consent and Gmail API configuration.
+For Gmail `users.watch`, Google needs a public HTTPS URL. Expose the backend (e.g. [ngrok](https://ngrok.com/)) and point the watch callback to `POST /webhooks/gmail`. Register the tunnel hostname in Google Cloud Console (OAuth + Gmail API) as required.
 
-## Environment variables
+## Troubleshooting
 
-**`backend/.env`** — see `backend/.env.example` in the repo (copy to `.env`).
-
-**`frontend/.env.local`** — see `frontend/.env.local.example` (copy to `.env.local`).
+- **`DATABASE_URL` validation error on startup:** URL must start with `postgresql+asyncpg://`. Hosted strings that start with `postgresql://` must be adjusted as described above.
+- **`npm install` / `npm run build` fails with `ENOSPC`:** Free disk space for `node_modules` and the npm cache (often `%LocalAppData%\npm-cache` on Windows).
+- **Branding:** Favicon is generated from `frontend/src/app/icon.tsx`; `frontend/public/logo.svg` is used in the UI.
 
 ## Founders
 
 - **Ghania Tanveer** — ghaniatanveer061@gmail.com  
 - **Muhammad Haseeb** — haseebch8130@gmail.com  
-
-## Troubleshooting
-
-- **`npm install` / `npm run build` fails with `ENOSPC`**: free disk space on the drive hosting `node_modules` and the npm cache (often `C:\\Users\\<you>\\AppData\\Local\\npm-cache`), then retry.
-- **`favicon.ico`**: the app also ships `src/app/icon.tsx` (GH monogram) and `public/logo.svg` for branding in the UI.
 
 ## License
 

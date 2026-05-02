@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -13,6 +13,7 @@ from app.api.v1.api import api_router
 from app.api.v1.deps import get_db
 from app.api.v1.endpoints import webhooks
 from app.core.config import get_settings
+from app.core.database import AsyncSessionLocal
 from app.core.limiter import limiter
 from app.models.waitlist import WaitlistEntry
 from app.schemas.email import ContactFormRequest
@@ -71,4 +72,17 @@ async def contact_form(body: ContactFormRequest) -> dict[str, str]:
 
 @app.get("/health")
 async def health() -> dict[str, str]:
+    """Liveness: no external dependencies (suitable for simple load balancers)."""
     return {"status": "ok"}
+
+
+@app.get("/health/ready")
+async def health_ready() -> JSONResponse:
+    """Readiness: confirms PostgreSQL connectivity (same DB as the rest of the API)."""
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+    except Exception as exc:
+        logger.warning("Readiness check failed: %s", exc)
+        return JSONResponse({"status": "degraded", "database": False}, status_code=503)
+    return JSONResponse({"status": "ok", "database": True})
