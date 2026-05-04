@@ -31,11 +31,14 @@ class Settings(BaseSettings):
         u = (v or "").strip()
         if not u:
             raise ValueError("DATABASE_URL is required.")
+        # Neon/hosted copies often use postgresql:// — coerce to async driver.
+        if u.startswith("postgresql://") and not u.startswith("postgresql+asyncpg://"):
+            u = "postgresql+asyncpg://" + u.removeprefix("postgresql://")
         if not u.startswith("postgresql+asyncpg://"):
             raise ValueError(
                 "DATABASE_URL must be a PostgreSQL URL using the asyncpg driver, "
                 "e.g. postgresql+asyncpg://user:pass@host:5432/dbname "
-                "(hosted providers often ship postgresql://… — replace the scheme with postgresql+asyncpg://)."
+                "(or postgresql://… from Neon — it is accepted and normalized automatically)."
             )
         return u
 

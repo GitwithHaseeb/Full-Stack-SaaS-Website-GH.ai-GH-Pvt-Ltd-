@@ -7,8 +7,8 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 def asyncpg_engine_kwargs(database_url: str) -> dict[str, object]:
     """
-    Strip sslmode from the URL and return connect_args for SSL when needed.
-    Hosted DBs (Neon, Supabase, Railway) often append ?sslmode=require.
+    Strip sslmode (and channel_binding) from the URL; asyncpg does not accept those as connect kwargs.
+    Hosted DBs (Neon, etc.) often append ?sslmode=require&channel_binding=require.
     """
     parsed = urlparse(database_url)
     pairs = parse_qsl(parsed.query, keep_blank_values=True)
@@ -20,6 +20,8 @@ def asyncpg_engine_kwargs(database_url: str) -> dict[str, object]:
             v = (val or "").lower()
             if v in ("require", "verify-ca", "verify-full", "prefer"):
                 ssl_on = True
+            continue
+        if lk == "channel_binding":
             continue
         kept.append((key, val))
     query = urlencode(kept)
