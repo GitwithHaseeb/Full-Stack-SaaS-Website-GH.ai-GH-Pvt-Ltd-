@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class LeadCreate(BaseModel):
@@ -11,6 +11,7 @@ class LeadCreate(BaseModel):
     company: Optional[str] = None
     pipeline_stage: str = "New Lead"
     assigned_agent: bool = False
+    acquisition_source: Optional[str] = Field(None, max_length=128)
 
 
 class LeadUpdate(BaseModel):
@@ -20,6 +21,7 @@ class LeadUpdate(BaseModel):
     notes: Optional[str] = None
     last_contacted_at: Optional[datetime] = None
     assigned_agent: Optional[bool] = None
+    acquisition_source: Optional[str] = Field(None, max_length=128)
 
 
 class EmailLogOut(BaseModel):
@@ -42,6 +44,8 @@ class LeadOut(BaseModel):
     notes: Optional[str] = None
     last_contacted_at: Optional[datetime] = None
     assigned_agent: bool
+    fit_score: Optional[int] = None
+    acquisition_source: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

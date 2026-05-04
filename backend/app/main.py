@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -13,6 +13,7 @@ from app.api.v1.api import api_router
 from app.api.v1.deps import get_db
 from app.api.v1.endpoints import webhooks
 from app.core.config import get_settings
+from app.core.email_norm import normalize_email
 from app.core.database import AsyncSessionLocal
 from app.core.limiter import limiter
 from app.models.waitlist import WaitlistEntry
@@ -53,10 +54,11 @@ async def join_waitlist(
     body: WaitlistRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict[str, str]:
-    existing = await db.execute(select(WaitlistEntry).where(WaitlistEntry.email == body.email))
+    wl_email = normalize_email(str(body.email))
+    existing = await db.execute(select(WaitlistEntry).where(func.lower(WaitlistEntry.email) == wl_email))
     if existing.scalar_one_or_none():
         return {"status": "ok", "message": "Already registered"}
-    db.add(WaitlistEntry(email=str(body.email)))
+    db.add(WaitlistEntry(email=wl_email))
     await db.flush()
     return {"status": "ok", "message": "Thank you, we will notify you."}
 

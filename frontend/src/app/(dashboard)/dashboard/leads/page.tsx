@@ -34,6 +34,7 @@ export default function LeadsPage() {
   async function addLead(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    const src = String(form.get("source") || "").trim();
     await apiFetch("/leads/", {
       method: "POST",
       json: {
@@ -41,6 +42,7 @@ export default function LeadsPage() {
         email: form.get("email"),
         company: form.get("company") || null,
         pipeline_stage: "New Lead",
+        ...(src ? { acquisition_source: src } : {}),
       },
     });
     setOpen(false);
@@ -80,6 +82,10 @@ export default function LeadsPage() {
                   <Label htmlFor="company">Company</Label>
                   <Input id="company" name="company" />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="source">Source (optional)</Label>
+                  <Input id="source" name="source" placeholder="e.g. LinkedIn, referral, import" />
+                </div>
                 <Button type="submit" className="w-full">
                   Save
                 </Button>
@@ -99,6 +105,8 @@ export default function LeadsPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Fit</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead>Stage</TableHead>
                 <TableHead>Last contacted</TableHead>
                 <TableHead>AI Agent</TableHead>
@@ -113,6 +121,8 @@ export default function LeadsPage() {
                     </Link>
                   </TableCell>
                   <TableCell>{l.email}</TableCell>
+                  <TableCell>{l.fit_score != null && l.fit_score !== undefined ? `${l.fit_score}/100` : "—"}</TableCell>
+                  <TableCell className="max-w-[140px] truncate text-muted-foreground">{l.acquisition_source || "—"}</TableCell>
                   <TableCell>{l.pipeline_stage}</TableCell>
                   <TableCell>{l.last_contacted_at ? new Date(l.last_contacted_at).toLocaleString() : "—"}</TableCell>
                   <TableCell>{l.assigned_agent ? "Enabled" : "Off"}</TableCell>

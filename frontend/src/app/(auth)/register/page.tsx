@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { parseApiErrorMessage } from "@/lib/api-client";
 import { register } from "@/lib/auth";
 
 export default function RegisterPage() {
@@ -18,8 +19,8 @@ export default function RegisterPage() {
     try {
       await register(String(form.get("email")), String(form.get("password")), String(form.get("company") || ""));
       router.push("/dashboard");
-    } catch {
-      setError("Could not register — email may already exist.");
+    } catch (err) {
+      setError(parseApiErrorMessage(err));
     }
   }
 

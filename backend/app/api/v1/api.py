@@ -6,6 +6,7 @@ from app.api.v1.endpoints import (
     auth,
     calendly,
     campaigns,
+    dev_reset,
     email,
     leads,
     pipeline,
@@ -22,3 +23,4 @@ api_router.include_router(ai_agent.router)
 api_router.include_router(calendly.router)
 api_router.include_router(email.router)
 api_router.include_router(api_keys.router)
+api_router.include_router(dev_reset.router)

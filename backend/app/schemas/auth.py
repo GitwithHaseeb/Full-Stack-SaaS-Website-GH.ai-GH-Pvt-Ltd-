@@ -1,4 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from app.core.email_norm import normalize_email
 
 
 class RegisterRequest(BaseModel):
@@ -6,10 +8,24 @@ class RegisterRequest(BaseModel):
     password: str = Field(min_length=8)
     company_name: str | None = None
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalize_email(cls, v: object) -> object:
+        if isinstance(v, str):
+            return normalize_email(v)
+        return v
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalize_email_login(cls, v: object) -> object:
+        if isinstance(v, str):
+            return normalize_email(v)
+        return v
 
 
 class TokenPair(BaseModel):

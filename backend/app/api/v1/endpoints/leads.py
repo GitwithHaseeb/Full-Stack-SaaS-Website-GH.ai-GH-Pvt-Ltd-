@@ -6,11 +6,12 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_user, get_db
 from app.models.email_log import EmailLog
 from app.models.lead import Lead, PIPELINE_STAGES
 from app.models.user import User
 from app.schemas.lead import EmailLogOut, LeadCreate, LeadDetailOut, LeadOut, LeadUpdate
+from app.services.lead_fit import compute_lead_fit_score
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -21,12 +22,15 @@ async def list_leads(
     current: Annotated[User, Depends(get_current_user)],
     stage: Optional[str] = None,
     q: Optional[str] = None,
+    min_fit: Optional[int] = Query(None, ge=0, le=100, description="Only leads with fit_score >= this value"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ) -> list[Lead]:
     stmt = select(Lead).where(Lead.user_id == current.id)
     if stage:
         stmt = stmt.where(Lead.pipeline_stage == stage)
+    if min_fit is not None:
+        stmt = stmt.where(Lead.fit_score.isnot(None), Lead.fit_score >= min_fit)
     if q:
         like = f"%{q}%"
         stmt = stmt.where((Lead.name.ilike(like)) | (Lead.email.ilike(like)))
@@ -43,6 +47,8 @@ async def create_lead(
 ) -> Lead:
     if body.pipeline_stage not in PIPELINE_STAGES:
         raise HTTPException(400, detail=f"Invalid stage. Allowed: {PIPELINE_STAGES}")
+    src = (body.acquisition_source or "").strip() or None
+    fit = compute_lead_fit_score(email=str(body.email), name=body.name, company=body.company)
     lead = Lead(
         user_id=current.id,
         name=body.name,
@@ -50,6 +56,8 @@ async def create_lead(
         company=body.company,
         pipeline_stage=body.pipeline_stage,
         assigned_agent=body.assigned_agent,
+        fit_score=fit,
+        acquisition_source=src,
     )
     db.add(lead)
     await db.flush()
@@ -103,6 +111,8 @@ async def update_lead(
     data = body.model_dump(exclude_unset=True)
     for k, v in data.items():
         setattr(lead, k, v)
+    if any(k in data for k in ("name", "company")):
+        lead.fit_score = compute_lead_fit_score(email=lead.email, name=lead.name, company=lead.company)
     db.add(lead)
     await db.flush()
     return lead

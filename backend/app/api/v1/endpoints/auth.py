@@ -2,10 +2,11 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_db
+from app.core.email_norm import normalize_email
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -44,11 +45,18 @@ async def register(
     response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenPair:
-    existing = await db.execute(select(User).where(User.email == body.email))
+    email_norm = normalize_email(str(body.email))
+    existing = await db.execute(select(User).where(func.lower(User.email) == email_norm))
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "This email already has an account — try logging in. "
+                "For extra test accounts on Gmail, use plus addressing (e.g. friend+ghai@gmail.com)."
+            ),
+        )
     user = User(
-        email=body.email,
+        email=email_norm,
         hashed_password=get_password_hash(body.password),
         company=body.company_name,
         ai_config={"enabled": True, "human_in_loop": False, "custom_instructions": "", "recent_decisions": []},
@@ -67,7 +75,8 @@ async def login(
     response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenPair:
-    result = await db.execute(select(User).where(User.email == body.email))
+    email_norm = normalize_email(str(body.email))
+    result = await db.execute(select(User).where(func.lower(User.email) == email_norm))
     user = result.scalar_one_or_none()
     if not user or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")

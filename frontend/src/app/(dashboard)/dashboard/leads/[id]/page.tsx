@@ -19,6 +19,8 @@ type LeadDetail = {
   company?: string | null;
   pipeline_stage: string;
   notes?: string | null;
+  fit_score?: number | null;
+  acquisition_source?: string | null;
   email_history: EmailLog[];
 };
 
@@ -43,8 +45,21 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         <h1 className="text-2xl font-semibold">{lead.name}</h1>
         <p className="text-sm text-muted-foreground">
           {lead.email} · {lead.pipeline_stage}
+          {lead.fit_score != null && lead.fit_score !== undefined ? ` · Fit score ${lead.fit_score}/100` : ""}
+          {lead.acquisition_source ? ` · Source: ${lead.acquisition_source}` : ""}
         </p>
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Lead quality</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          <p>
+            Fit score is computed from company, email domain (work vs consumer), and title-like signals in the name —
+            so you can prioritize ICP-like leads instead of chasing raw list size.
+          </p>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Notes</CardTitle>

@@ -48,6 +48,9 @@ function DraggableLead({ lead }: { lead: Lead }) {
     >
       <div className="font-medium">{lead.name}</div>
       <div className="text-xs text-muted-foreground">{lead.email}</div>
+      {lead.fit_score != null && lead.fit_score !== undefined ? (
+        <div className="text-xs text-primary/90">Fit {lead.fit_score}</div>
+      ) : null}
     </div>
   );
 }

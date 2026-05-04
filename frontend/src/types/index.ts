@@ -7,6 +7,8 @@ export type Lead = {
   notes?: string | null;
   last_contacted_at?: string | null;
   assigned_agent: boolean;
+  fit_score?: number | null;
+  acquisition_source?: string | null;
   created_at: string;
 };
 

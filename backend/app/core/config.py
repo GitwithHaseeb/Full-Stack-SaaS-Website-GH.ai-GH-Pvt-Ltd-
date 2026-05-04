@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     CORS_ORIGINS: str = "http://localhost:3000"
+    # Local QA: set a non-empty secret to enable DELETE /api/v1/dev/reset-test-user (see docs in endpoint).
+    DEV_USER_RESET_SECRET: str = ""
 
     @field_validator("DATABASE_URL")
     @classmethod

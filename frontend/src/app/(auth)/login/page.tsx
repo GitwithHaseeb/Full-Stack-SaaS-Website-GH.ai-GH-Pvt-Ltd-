@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { parseApiErrorMessage } from "@/lib/api-client";
 import { login } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -18,8 +19,8 @@ export default function LoginPage() {
     try {
       await login(String(form.get("email")), String(form.get("password")));
       router.push("/dashboard");
-    } catch {
-      setError("Invalid credentials");
+    } catch (err) {
+      setError(parseApiErrorMessage(err));
     }
   }
 
