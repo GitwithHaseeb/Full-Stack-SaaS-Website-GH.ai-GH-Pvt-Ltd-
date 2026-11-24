@@ -1,44 +1,7 @@
-"use client";
-
-import { useState } from "react";
-import { Linkedin, Mail } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { apiFetch } from "@/lib/api-client";
-import { founders, services } from "@/lib/company";
+import { ArrowRight, Mail } from "lucide-react";
+import { contactEmails, services } from "@/lib/company";
 
 export default function ContactPage() {
-  const [status, setStatus] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
-
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formEl = e.currentTarget;
-    const form = new FormData(formEl);
-    const service = form.get("service");
-    const message = String(form.get("message") ?? "");
-    setSending(true);
-    try {
-      await apiFetch<{ message?: string }>("/contact", {
-        method: "POST",
-        json: {
-          name: form.get("name"),
-          email: form.get("email"),
-          company: form.get("company") || null,
-          message: service ? `[${service}] ${message}` : message,
-        },
-      });
-      setStatus("Thank you — your message has reached the founders.");
-      formEl.reset();
-    } catch {
-      setStatus("Could not send right now. Please email one of us directly.");
-    } finally {
-      setSending(false);
-    }
-  }
-
   return (
     <div>
       <section className="bg-ivory">
@@ -48,85 +11,40 @@ export default function ContactPage() {
             <h1 className="text-[2.5rem] leading-[1.1] text-navy md:text-5xl">Start a conversation</h1>
             <span className="rule-brass" />
             <p className="text-lg text-ink">
-              Tell us where things stand — a quiet page, an old website, a brand that doesn&apos;t match. You&apos;ll hear
-              back from one of the founders, not a sales team.
+              Tell us where things stand — a quiet page, an old website, a brand that doesn&apos;t match. Email is the
+              only way to reach us, and you&apos;ll hear back from the people doing the work, not a sales team.
             </p>
-            <ul className="divide-y divide-hairline border-y border-hairline pt-0">
-              {founders.map((f) => (
-                <li key={f.name} className="space-y-1 py-5">
-                  <div className="font-display text-xl text-navy">{f.name}</div>
-                  <div className="services-line text-ink">{f.focus}</div>
-                  <div className="flex flex-wrap gap-x-5 text-sm">
-                    <a href={`mailto:${f.email}`} className="inline-flex min-h-11 items-center gap-2 text-navy hover:underline">
-                      <Mail className="h-4 w-4" />
-                      {f.email}
-                    </a>
-                    <a
-                      href={f.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-11 items-center gap-2 text-navy hover:underline"
-                    >
-                      <Linkedin className="h-4 w-4" />
-                      LinkedIn
-                    </a>
-                  </div>
-                </li>
-              ))}
-            </ul>
           </div>
 
-          <form className="space-y-5 border border-hairline p-6 md:p-8" onSubmit={onSubmit}>
-            <h2 className="text-2xl text-navy">Send a message</h2>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="eyebrow text-navy">
-                  Name
-                </Label>
-                <Input id="name" name="name" required className="h-11 bg-ivory" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" className="eyebrow text-navy">
-                  Email
-                </Label>
-                <Input id="email" name="email" type="email" required className="h-11 bg-ivory" />
-              </div>
-            </div>
+          <div className="space-y-8 border border-hairline p-6 md:p-8">
             <div className="space-y-2">
-              <Label htmlFor="company" className="eyebrow text-navy">
-                Company <span className="font-normal normal-case tracking-normal text-ink">(optional)</span>
-              </Label>
-              <Input id="company" name="company" className="h-11 bg-ivory" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="service" className="eyebrow text-navy">
-                What do you need?
-              </Label>
-              <select
-                id="service"
-                name="service"
-                defaultValue=""
-                className="flex h-11 w-full rounded-md border border-input bg-ivory px-3 text-sm text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value="">Not sure yet</option>
-                {services.map((s) => (
-                  <option key={s.slug} value={s.title}>
-                    {s.title}
-                  </option>
+              <p className="eyebrow text-navy">Email us</p>
+              <ul className="divide-y divide-hairline border-y border-hairline">
+                {contactEmails.map((email) => (
+                  <li key={email}>
+                    <a
+                      href={`mailto:${email}?subject=${encodeURIComponent("Enquiry — GH Pvt Ltd")}`}
+                      className="group flex min-h-14 items-center justify-between gap-4 py-3 text-navy"
+                    >
+                      <span className="flex items-center gap-3 break-all text-lg">
+                        <Mail className="h-5 w-5 shrink-0" />
+                        {email}
+                      </span>
+                      <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                    </a>
+                  </li>
                 ))}
-              </select>
+              </ul>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="message" className="eyebrow text-navy">
-                Message
-              </Label>
-              <Textarea id="message" name="message" required rows={5} className="bg-ivory" />
+            <div className="space-y-3">
+              <p className="eyebrow text-navy">Helpful to include</p>
+              <ul className="space-y-2 text-[15px] text-ink">
+                <li>Your business name and what it does</li>
+                <li>Which service you need — {services.map((s) => s.title).join(", ")}</li>
+                <li>Links to your current page or website, if you have one</li>
+              </ul>
             </div>
-            <Button type="submit" size="lg" disabled={sending}>
-              {sending ? "Sending…" : "Send message"}
-            </Button>
-            {status ? <p className="text-sm text-ink">{status}</p> : null}
-          </form>
+          </div>
         </div>
       </section>
     </div>

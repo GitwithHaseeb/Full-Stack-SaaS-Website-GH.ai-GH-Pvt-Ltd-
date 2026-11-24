@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FoundersGrid } from "@/components/marketing/founders";
 
 export const metadata: Metadata = {
   title: "About",
   description:
-    "GH Pvt Ltd is a design and technology studio founded by Muhammad Haseeb and Ghania Tanveer. Small team, on purpose.",
+    "GH Pvt Ltd is a design and technology studio. Small team, on purpose.",
 };
 
 const principles = [
@@ -16,7 +15,7 @@ const principles = [
   },
   {
     title: "Small, on purpose",
-    body: "You talk to the founders and the people doing the work — never an account manager relaying messages.",
+    body: "You talk directly to the people doing the work — never an account manager relaying messages.",
   },
   {
     title: "We run it",
@@ -59,17 +58,9 @@ export default function AboutPage() {
       </section>
 
       <section className="bg-ivory">
-        <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-24">
-          <p className="eyebrow mb-4 text-navy">Founders</p>
-          <h2 className="mb-12 text-4xl text-navy md:text-5xl">Muhammad Haseeb &amp; Ghania Tanveer</h2>
-          <FoundersGrid priority />
-        </div>
-      </section>
-
-      <section className="section-dark bg-navy text-mist">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-4 py-20 md:flex-row md:items-center md:justify-between md:px-6">
-          <h2 className="max-w-2xl text-3xl text-ivory md:text-4xl">Want to see what we would change first?</h2>
-          <Button asChild size="lg" className="bg-ivory text-navy hover:bg-ivory/90">
+          <h2 className="max-w-2xl text-3xl text-navy md:text-4xl">Want to see what we would change first?</h2>
+          <Button asChild size="lg">
             <Link href="/contact">Get in touch</Link>
           </Button>
         </div>

@@ -1,7 +1,3 @@
-import type { StaticImageData } from "next/image";
-import ghaniaPhoto from "@/assets/team/ghania.png";
-import haseebPhoto from "@/assets/team/haseeb.png";
-
 export const SERVICES_LINE = "Design · Social · Web · IT";
 
 export type Service = {
@@ -64,33 +60,5 @@ export const services: Service[] = [
   },
 ];
 
-export type Founder = {
-  name: string;
-  role: string;
-  focus: string;
-  bio: string;
-  email: string;
-  linkedin: string;
-  photo: StaticImageData;
-};
-
-export const founders: Founder[] = [
-  {
-    name: "Muhammad Haseeb",
-    role: "Co-Founder",
-    focus: "Engineering · Web · Software",
-    bio: "Leads web development, software and IT — from business sites and e-commerce to custom platforms, hosting and support.",
-    email: "haseebch8130@gmail.com",
-    linkedin: "https://www.linkedin.com/in/muhammad-haseeb-5a73bb317",
-    photo: haseebPhoto,
-  },
-  {
-    name: "Ghania Tanveer",
-    role: "Co-Founder",
-    focus: "Brand · Social · Client success",
-    bio: "Leads brand, design and social media — the content calendar, campaigns and the day-to-day relationship with every client.",
-    email: "ghaniatanveer061@gmail.com",
-    linkedin: "https://www.linkedin.com/in/ghania-tanveer-894625311/",
-    photo: ghaniaPhoto,
-  },
-];
+/** The only way to reach us is email. No names, photos or social profiles on the site. */
+export const contactEmails = ["haseebch8130@gmail.com", "ghaniatanveer061@gmail.com"];

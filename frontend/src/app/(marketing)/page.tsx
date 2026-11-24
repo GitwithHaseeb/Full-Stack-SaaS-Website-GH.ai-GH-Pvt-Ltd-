@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FoundersGrid } from "@/components/marketing/founders";
 import { SERVICES_LINE, services } from "@/lib/company";
 
 const socialSteps = [
@@ -126,18 +125,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* About + founders — Ivory */}
+      {/* About — Ivory */}
       <section className="bg-ivory">
         <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
-          <div className="mb-12 grid gap-8 md:grid-cols-[1fr_1.2fr] md:items-end">
+          <div className="grid gap-8 md:grid-cols-[1fr_1.2fr] md:items-end">
             <div className="space-y-4">
               <p className="eyebrow text-navy">About</p>
               <h2 className="text-4xl text-navy md:text-5xl">You talk to the people doing the work.</h2>
             </div>
             <div className="space-y-5">
               <p className="text-lg text-ink">
-                GH Pvt Ltd is a design and technology studio, founded and run by Muhammad Haseeb and Ghania Tanveer. Small
-                team, on purpose — no account manager in between. We work with people and businesses across:
+                GH Pvt Ltd is a design and technology studio. Small team, on purpose — no account manager in between. We work with people and businesses across:
               </p>
               <ul className="flex flex-wrap gap-x-6 gap-y-2">
                 {sectors.map((s) => (
@@ -148,7 +146,6 @@ export default function HomePage() {
               </ul>
             </div>
           </div>
-          <FoundersGrid />
         </div>
       </section>
 
