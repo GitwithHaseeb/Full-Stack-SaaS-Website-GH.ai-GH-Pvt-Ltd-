@@ -26,7 +26,7 @@ export default function RegisterPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold">Create your GH.ai workspace</h1>
+      <h1 className="mb-6 text-2xl font-semibold">Create your client account</h1>
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">
           <Label htmlFor="company">Company</Label>

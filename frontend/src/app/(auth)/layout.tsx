@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { LogoMark } from "@/components/marketing/logo-mark";
+import { Wordmark } from "@/components/marketing/logo-mark";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950">
-      <Link href="/" className="mb-8 flex items-center gap-2 text-lg font-semibold">
-        <LogoMark />
-        GH.ai
+    <div className="flex min-h-screen flex-col items-center justify-center bg-ivory px-4 py-12">
+      <Link href="/" aria-label="GH Pvt Ltd — home" className="mb-3">
+        <Wordmark size={44} />
       </Link>
-      <div className="w-full max-w-md rounded-xl border bg-background p-8 shadow-sm">{children}</div>
+      <p className="services-line mb-8 text-ink">Client portal</p>
+      <div className="w-full max-w-md rounded-lg border border-hairline bg-ivory p-8">{children}</div>
     </div>
   );
 }

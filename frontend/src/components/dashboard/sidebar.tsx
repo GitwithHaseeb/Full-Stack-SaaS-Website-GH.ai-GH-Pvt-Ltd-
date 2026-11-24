@@ -27,12 +27,12 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <div className="flex h-full flex-col bg-sidebar text-slate-100">
+    <div className="flex h-full flex-col bg-sidebar text-mist">
       <div className="flex items-center gap-2 px-4 py-5">
-        <LogoMark className="brightness-0 invert" />
+        <LogoMark tone="ivory" size={32} />
         <div>
-          <div className="text-sm font-semibold">GH.ai</div>
-          <div className="text-xs text-slate-400">GH Pvt Ltd</div>
+          <div className="font-display text-base font-semibold text-ivory">GH Pvt Ltd</div>
+          <div className="text-[11px] uppercase tracking-[0.16em] text-mist">Client portal</div>
         </div>
       </div>
       <nav className="flex-1 space-y-1 px-2">
@@ -47,8 +47,8 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-slate-800",
-                active && "bg-slate-800 text-white",
+                "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-rule",
+                active && "bg-rule text-ivory",
               )}
             >
               <item.icon className="h-4 w-4" />
@@ -58,7 +58,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
       <div className="p-3">
-        <Button variant="ghost" className="w-full justify-start text-slate-200 hover:bg-slate-800" onClick={handleLogout}>
+        <Button variant="ghost" className="w-full justify-start text-slate-200 hover:bg-rule" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           Logout
         </Button>

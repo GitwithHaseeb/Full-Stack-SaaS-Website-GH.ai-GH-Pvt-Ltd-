@@ -2,31 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * GH Pvt Ltd — "Oxford" palette (see BRAND.md).
+ * Values are HSL triplets so Tailwind can apply opacity modifiers.
+ *   Oxford Navy #0E1C33 · Brass #A8812F · Brass Light #C9A24B · Ivory #FAF9F6
+ *   Slate #4A5568 · Hairline #DDDCD7 · Muted (on navy) #AEB7C4 · Rule (on navy) #2A3A52
+ */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 221 83% 53%;
-  --radius: 0.6rem;
+  --background: 45 29% 97%; /* Ivory */
+  --foreground: 217 57% 13%; /* Oxford Navy */
+  --card: 45 29% 97%;
+  --card-foreground: 217 57% 13%;
+  --muted: 50 8% 92%;
+  --muted-foreground: 218 17% 35%; /* Slate */
+  --border: 50 8% 85%; /* Hairline */
+  --input: 50 8% 85%;
+  --ring: 41 56% 42%; /* Brass */
+  --primary: 217 57% 13%;
+  --primary-foreground: 45 29% 97%;
+  --radius: 0.25rem;
 }
 
 .dark {
-  --background: 222 47% 6%;
-  --foreground: 210 40% 98%;
-  --card: 222 47% 8%;
-  --card-foreground: 210 40% 98%;
-  --muted: 217 33% 14%;
-  --muted-foreground: 215 20% 65%;
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 221 83% 53%;
+  --background: 217 57% 13%; /* Oxford Navy */
+  --foreground: 45 29% 97%; /* Ivory */
+  --card: 217 57% 13%;
+  --card-foreground: 45 29% 97%;
+  --muted: 216 32% 20%;
+  --muted-foreground: 215 16% 73%; /* Muted on navy */
+  --border: 216 32% 24%; /* Rule on navy */
+  --input: 216 32% 24%;
+  --ring: 41 54% 54%; /* Brass Light */
+  --primary: 45 29% 97%;
+  --primary-foreground: 217 57% 13%;
 }
 
 body {
   @apply bg-background text-foreground antialiased;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+@layer components {
+  .eyebrow {
+    @apply text-xs font-semibold uppercase;
+    letter-spacing: 0.22em;
+  }
+  .services-line {
+    @apply text-xs font-medium uppercase;
+    letter-spacing: 0.16em;
+  }
+  .rule-brass {
+    @apply block h-px w-[34px] border-0 bg-brass;
+  }
+  .section-dark .rule-brass {
+    @apply bg-brass-light;
+  }
 }
